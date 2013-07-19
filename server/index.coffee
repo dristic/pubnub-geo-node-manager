@@ -42,6 +42,18 @@ class Node
     console.log distance
 
     # Radius is in meters, distance is in km
+    if distance > (@radius / 1000) and distance < (@radius / 1000) + (500 / 1000)
+      true
+    else
+      false
+
+  isInside: (lat, long) ->
+    distance = calculateDistance @lat, @long, lat, long
+    distance = Math.abs distance
+
+    console.log distance
+
+    # Radius is in meters, distance is in km
     if distance < (@radius / 1000)
       true
     else
@@ -89,15 +101,24 @@ app.use '/nodes', (req, res) ->
   data = req.body
   console.log data
 
-  foundNodes = []
+  nearNodes = []
+  insideNodes = []
   for node in nodes
     if node.isNear data.location.latitude, data.location.longitude
-      foundNodes.push
+      nearNodes.push
+        name: node.name
+        lat: node.lat
+        long: node.long
+        radius: node.radius
+    if node.isInside data.location.latitude, data.location.longitude
+      insideNodes.push
         name: node.name
         lat: node.lat
         long: node.long
         radius: node.radius
 
-  res.end JSON.stringify foundNodes
+  res.end JSON.stringify
+    near: nearNodes
+    inside: insideNodes
 
 app.listen(3001)

@@ -1,5 +1,5 @@
 (function() {
-  var Node, calculateDistance, createNode, currentNode, currentPos, map, nodes, onError, pubnub, startPos, uuid;
+  var Node, calculateDistance, chilled, currentNode, currentPos, map, nodes, onError, pubnub, startPos, updateNodes, uuid;
 
   calculateDistance = function(lat1, lon1, lat2, lon2) {
     var R, a, c, d, dLat, dLon;
@@ -15,6 +15,77 @@
   Number.prototype.toRad = function() {
     return this * Math.PI / 180;
   };
+
+  chilled = [
+    {
+      featureType: 'road',
+      elementType: 'geometry',
+      stylers: [
+        {
+          'visibility': 'simplified'
+        }
+      ]
+    }, {
+      featureType: 'road.arterial',
+      stylers: [
+        {
+          hue: 149
+        }, {
+          saturation: -78
+        }, {
+          lightness: 0
+        }
+      ]
+    }, {
+      featureType: 'road.highway',
+      stylers: [
+        {
+          hue: -31
+        }, {
+          saturation: -40
+        }, {
+          lightness: 2.8
+        }
+      ]
+    }, {
+      featureType: 'poi',
+      elementType: 'label',
+      stylers: [
+        {
+          'visibility': 'off'
+        }
+      ]
+    }, {
+      featureType: 'landscape',
+      stylers: [
+        {
+          hue: 163
+        }, {
+          saturation: -26
+        }, {
+          lightness: -1.1
+        }
+      ]
+    }, {
+      featureType: 'transit',
+      stylers: [
+        {
+          'visibility': 'off'
+        }
+      ]
+    }, {
+      featureType: 'water',
+      stylers: [
+        {
+          hue: 3
+        }, {
+          saturation: -24.24
+        }, {
+          lightness: -38.57
+        }
+      ]
+    }
+  ];
 
   uuid = PUBNUB.uuid();
 
@@ -45,25 +116,18 @@
 
   nodes = [];
 
-  createNode = function(name, lat, long, radius) {
-    var opts;
-    console.log("Creating " + name + " " + lat + " " + long);
-    opts = {
-      fillColor: 'blue',
-      fillOpacity: 0.1,
-      strokeColor: 'blue',
-      strokeWeight: 2,
-      map: map,
-      center: new google.maps.LatLng(lat, long),
-      radius: radius,
-      title: name
-    };
-    return nodes.push(new google.maps.Circle(opts));
-  };
+  startPos = {};
+
+  currentPos = {};
+
+  currentNode = '';
+
+  nodes = [];
 
   Node = (function() {
     function Node(name, radius, lat, long) {
-      var _this = this;
+      var opts,
+        _this = this;
       this.name = name;
       this.radius = radius;
       this.lat = lat;
@@ -82,71 +146,125 @@
           return _this.el.text("" + _this.name + " (" + _this.users + ")");
         }
       });
+      opts = {
+        fillColor: 'blue',
+        fillOpacity: 0.1,
+        strokeColor: 'blue',
+        strokeWeight: 2,
+        map: map,
+        center: new google.maps.LatLng(lat, long),
+        radius: radius,
+        title: name
+      };
+      this.circle = new google.maps.Circle(opts);
+      this.el.on('click', function(event) {
+        if (currentNode !== '') {
+          pubnub.unsubscribe({
+            channel: currentNode
+          });
+          $('#messages').html($('#messages').html() + ("--Left room " + currentNode + "--<br />"));
+        }
+        currentNode = _this.name;
+        $('#messages').html($('#messages').html() + ("--Joined room " + currentNode + "--<br />"));
+        return pubnub.subscribe({
+          channel: currentNode,
+          callback: function(message) {
+            console.log("Node returned " + message);
+            $('#messages').html($('#messages').html() + ("" + message + "<br />"));
+            return $("#messages").animate({
+              scrollTop: $('#messages').height()
+            }, "slow");
+          },
+          presence: function(message) {
+            return console.log("Presence node " + message);
+          }
+        });
+      });
     }
+
+    Node.prototype.destroy = function() {
+      pubnub.unsubscribe({
+        channel: this.name
+      });
+      this.circle.setMap(null);
+      this.el.off('click');
+      delete this.name;
+      delete this.radius;
+      delete this.lat;
+      delete this.long;
+      return delete this.circle;
+    };
 
     return Node;
 
   })();
 
-  startPos = {};
-
-  currentPos = {};
-
-  currentNode = '';
+  updateNodes = function() {
+    return $.ajax({
+      type: 'POST',
+      url: 'http://localhost:3001/nodes',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      data: JSON.stringify({
+        name: 'Testing',
+        location: {
+          latitude: currentPos.coords.latitude,
+          longitude: currentPos.coords.longitude
+        }
+      }),
+      success: function(data) {
+        var node, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _results;
+        data = JSON.parse(data);
+        console.log(data);
+        $('#nodes a').off('click');
+        $('#nodes').html("Nodes located in: ");
+        for (_i = 0, _len = nodes.length; _i < _len; _i++) {
+          node = nodes[_i];
+          node.destroy();
+        }
+        _ref = data.near;
+        for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+          node = _ref[_j];
+          nodes.push(new Node(node.name, node.radius, node.lat, node.long));
+        }
+        _ref1 = data.inside;
+        _results = [];
+        for (_k = 0, _len2 = _ref1.length; _k < _len2; _k++) {
+          node = _ref1[_k];
+          nodes.push(new Node(node.name, node.radius, node.lat, node.long));
+          _results.push($('#nodes').append(nodes[nodes.length - 1].el));
+        }
+        return _results;
+      }
+    });
+  };
 
   $(document).ready(function() {
     navigator.geolocation.getCurrentPosition((function(position) {
-      var mapOptions, marker;
+      var mapOptions, marker, styledMapType;
       startPos = position;
+      currentPos = position;
       if (localStorage['location']) {
         startPos = JSON.parse(localStorage['location']);
       }
-      document.getElementById('startLocation').innerHTML = startPos.coords.latitude + " : " + startPos.coords.longitude;
-      $.ajax({
-        type: 'POST',
-        url: 'http://localhost:3001/nodes',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        data: JSON.stringify({
-          name: 'Testing',
-          location: startPos.coords
-        }),
-        success: function(data) {
-          var node, _i, _len;
-          data = JSON.parse(data);
-          console.log(data);
-          $('#nodes').html("Nodes in your area: ");
-          for (_i = 0, _len = data.length; _i < _len; _i++) {
-            node = data[_i];
-            createNode(node.name, node.lat, node.long, node.radius);
-            node = new Node(node.name, node.radius, node.lat, node.long);
-            $('#nodes').append(node.el);
-          }
-          $('#nodes a').off('click');
-          return $('#nodes a').on('click', function(event) {
-            var target;
-            target = $(event.target);
-            currentNode = target.text();
-            return pubnub.subscribe({
-              channel: currentNode,
-              callback: function(message) {
-                console.log("Node returned " + message);
-                return $('#messages').html($('#messages').html() + ("" + message + "<br />"));
-              },
-              presence: function(message) {
-                return console.log("Presence node " + message);
-              }
-            });
-          });
-        }
+      updateNodes();
+      styledMapType = new google.maps.StyledMapType(chilled, {
+        name: 'Chilled'
       });
       mapOptions = {
         center: new google.maps.LatLng(startPos.coords.latitude, startPos.coords.longitude),
         zoom: 15,
-        mapTypeId: google.maps.MapTypeId.ROADMAP
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        disableDefaultUI: true,
+        mapTypeId: 'Chilled',
+        mapTypeControlOptions: {
+          mapTypeIds: [google.maps.MapTypeId.ROADMAP, 'map_style']
+        }
       };
       map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
+      map.mapTypes.set('map_style', styledMapType);
+      map.setMapTypeId('map_style');
       return marker = new google.maps.Marker({
         position: mapOptions.center,
         title: "Hello World!",
@@ -155,8 +273,11 @@
     }), onError);
     navigator.geolocation.watchPosition(function(position) {
       currentPos = position;
-      document.getElementById('curLocation').innerHTML = currentPos.coords.latitude + " : " + currentPos.coords.longitude;
-      return document.getElementById('distance').innerHTML = calculateDistance(startPos.coords.latitude, startPos.coords.longitude, currentPos.coords.latitude, currentPos.coords.longitude);
+      if (localStorage['location']) {
+        currentPos = JSON.parse(localStorage['location']);
+      }
+      updateNodes();
+      return map.setCenter(new google.maps.LatLng(currentPos.coords.latitude, currentPos.coords.longitude));
     });
     document.querySelector('#create-node').onclick = function(event) {
       var nodeName, radius;
@@ -175,19 +296,6 @@
         })
       });
     };
-    pubnub.subscribe({
-      channel: 'createNode',
-      callback: function(message) {
-        var distance;
-        message = JSON.parse(message);
-        if (!message.uuid) {
-          distance = calculateDistance(startPos.coords.latitude, startPos.coords.longitude, message.coords.lat, message.coords.long);
-          if (distance < 10) {
-            return createNode(message.name, message.coords.lat, message.coords.long, message.radius);
-          }
-        }
-      }
-    });
     return $('#send-message').on('click', function(event) {
       var message;
       message = $('#message').val();

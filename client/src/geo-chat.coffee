@@ -12,6 +12,49 @@ calculateDistance = (lat1, lon1, lat2, lon2) ->
 Number.prototype.toRad = () ->
   return this * Math.PI / 180
 
+chilled = [
+  {
+    featureType: 'road',
+    elementType: 'geometry',
+    stylers: [{'visibility': 'simplified'}]
+  }, {
+    featureType: 'road.arterial',
+    stylers: [
+     {hue: 149},
+     {saturation: -78},
+     {lightness: 0}
+    ]
+  }, {
+    featureType: 'road.highway',
+    stylers: [
+      {hue: -31},
+      {saturation: -40},
+      {lightness: 2.8}
+    ]
+  }, {
+    featureType: 'poi',
+    elementType: 'label',
+    stylers: [{'visibility': 'off'}]
+  }, {
+    featureType: 'landscape',
+    stylers: [
+      {hue: 163},
+      {saturation: -26},
+      {lightness: -1.1}
+    ]
+  }, {
+    featureType: 'transit',
+    stylers: [{'visibility': 'off'}]
+  }, {
+    featureType: 'water',
+    stylers: [
+      {hue: 3},
+      {saturation: -24.24},
+      {lightness: -38.57}
+    ]
+  }
+]
+
 uuid = PUBNUB.uuid()
 
 pubnub = PUBNUB.init
@@ -32,22 +75,15 @@ else
 onError = (error) ->
   alert 'Error has occurred: ' + error.code
 
+# Globals
 map = {}
 nodes = []
-createNode = (name, lat, long, radius) ->
-  console.log "Creating #{name} #{lat} #{long}"
-  opts =
-    fillColor: 'blue'
-    fillOpacity: 0.1
-    strokeColor: 'blue'
-    strokeWeight: 2
-    map: map
-    center: new google.maps.LatLng lat, long
-    radius: radius
-    title: name
+startPos = {}
+currentPos = {}
+currentNode = ''
+nodes = []
 
-  nodes.push new google.maps.Circle opts
-
+# Node class that holds view information and updates presence
 class Node
   constructor: (@name, @radius, @lat, @long) ->
     @el = $("<a href='#'>#{@name}</a>")
@@ -64,56 +100,102 @@ class Node
           @users--
         @el.text("#{@name} (#{@users})")
 
-startPos = {}
-currentPos = {}
-currentNode = ''
-$(document).ready () ->
-  navigator.geolocation.getCurrentPosition ((position) ->
-    startPos = position
+    opts =
+      fillColor: 'blue'
+      fillOpacity: 0.1
+      strokeColor: 'blue'
+      strokeWeight: 2
+      map: map
+      center: new google.maps.LatLng lat, long
+      radius: radius
+      title: name
 
-    if localStorage['location']
-      startPos = JSON.parse localStorage['location']
+    @circle = new google.maps.Circle opts
 
-    document.getElementById('startLocation').innerHTML = startPos.coords.latitude + " : " + startPos.coords.longitude
+    @el.on 'click', (event) =>
+      unless currentNode is ''
+        pubnub.unsubscribe
+          channel: currentNode
+        $('#messages').html($('#messages').html() + "--Left room #{currentNode}--<br />")
 
-    $.ajax
+      currentNode = @name
+
+      $('#messages').html($('#messages').html() + "--Joined room #{currentNode}--<br />")
+
+      pubnub.subscribe
+        channel: currentNode
+        callback: (message) ->
+          console.log "Node returned #{message}"
+          $('#messages').html($('#messages').html() + "#{message}<br />")
+          $("#messages").animate({ scrollTop: $('#messages').height() }, "slow");
+        presence: (message) ->
+          console.log "Presence node #{message}"
+
+  destroy: () ->
+    pubnub.unsubscribe
+      channel: @name
+    @circle.setMap null
+    @el.off 'click'
+    delete @name
+    delete @radius
+    delete @lat
+    delete @long
+    delete @circle
+
+# Get the nodes from the server and bind them to node objects
+updateNodes = () ->
+  $.ajax
       type: 'POST'
       url: 'http://localhost:3001/nodes'
       headers:
         'Content-Type': 'application/json'
       data: JSON.stringify
         name: 'Testing'
-        location: startPos.coords
+        location:
+          latitude: currentPos.coords.latitude
+          longitude: currentPos.coords.longitude
       success: (data) ->
         data = JSON.parse data
         console.log data
 
-        $('#nodes').html("Nodes in your area: ")
-
-        for node in data
-          createNode node.name, node.lat, node.long, node.radius
-          node = new Node node.name, node.radius, node.lat, node.long
-          $('#nodes').append(node.el)
-
         $('#nodes a').off('click')
-        $('#nodes a').on 'click', (event) ->
-          target = $ event.target
-          currentNode = target.text()
+        $('#nodes').html("Nodes located in: ")
 
-          pubnub.subscribe
-            channel: currentNode
-            callback: (message) ->
-              console.log "Node returned #{message}"
-              $('#messages').html($('#messages').html() + "#{message}<br />")
-            presence: (message) ->
-              console.log "Presence node #{message}"
+        for node in nodes
+          node.destroy()
+
+        for node in data.near
+          nodes.push new Node node.name, node.radius, node.lat, node.long
+
+        for node in data.inside
+          nodes.push new Node node.name, node.radius, node.lat, node.long
+          $('#nodes').append(nodes[nodes.length - 1].el)
+
+$(document).ready () ->
+  # Get the current position and initialize the map
+  navigator.geolocation.getCurrentPosition ((position) ->
+    startPos = position
+    currentPos = position
+
+    if localStorage['location']
+      startPos = JSON.parse localStorage['location']
+
+    updateNodes()
+
+    styledMapType = new google.maps.StyledMapType chilled, { name: 'Chilled' }
 
     mapOptions =
       center: new google.maps.LatLng(startPos.coords.latitude, startPos.coords.longitude)
       zoom: 15
       mapTypeId: google.maps.MapTypeId.ROADMAP
+      disableDefaultUI: true
+      mapTypeId: 'Chilled'
+      mapTypeControlOptions:
+        mapTypeIds: [google.maps.MapTypeId.ROADMAP, 'map_style']
 
     map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions)
+    map.mapTypes.set 'map_style', styledMapType
+    map.setMapTypeId 'map_style'
 
     marker = new google.maps.Marker
       position: mapOptions.center
@@ -121,16 +203,18 @@ $(document).ready () ->
       map: map
   ), onError
 
+  # Watch the geolocation over time
   navigator.geolocation.watchPosition (position) ->
     currentPos = position
 
-    document.getElementById('curLocation').innerHTML = currentPos.coords.latitude + " : " + currentPos.coords.longitude
+    if localStorage['location']
+      currentPos = JSON.parse localStorage['location']
 
-    document.getElementById('distance').innerHTML = calculateDistance startPos.coords.latitude,
-      startPos.coords.longitude,
-      currentPos.coords.latitude,
-      currentPos.coords.longitude
+    updateNodes()
 
+    map.setCenter new google.maps.LatLng(currentPos.coords.latitude, currentPos.coords.longitude)
+
+  # Sends a create node command to the server
   document.querySelector('#create-node').onclick = (event) ->
     nodeName = $('#node-name').val()
     radius = parseInt($('#radius').val())
@@ -143,18 +227,6 @@ $(document).ready () ->
         coords:
           lat: currentPos.coords.latitude
           long: currentPos.coords.longitude
-
-  # Create nodes on the map as they get created if they are within 10 km
-  pubnub.subscribe
-    channel: 'createNode'
-    callback: (message) ->
-      message = JSON.parse message
-
-      unless message.uuid
-        distance = calculateDistance startPos.coords.latitude, startPos.coords.longitude, message.coords.lat, message.coords.long
-
-        if distance < 10
-          createNode message.name, message.coords.lat, message.coords.long, message.radius
 
   # Bindings for sending chat messages
   $('#send-message').on 'click', (event) ->
