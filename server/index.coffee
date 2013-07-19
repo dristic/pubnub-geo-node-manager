@@ -1,4 +1,4 @@
-pubnub = require 'pubnub'
+PUBNUB = require 'pubnub'
 connect = require 'connect'
 
 calculateDistance = (lat1, lon1, lat2, lon2) ->
@@ -15,11 +15,11 @@ calculateDistance = (lat1, lon1, lat2, lon2) ->
 Number.prototype.toRad = () ->
   return this * Math.PI / 180
 
-pn = pubnub.init
+pubnub = PUBNUB.init
   subscribe_key: 'sub-c-4a330ce2-ced1-11e2-9fea-02ee2ddab7fe'
   publish_key: 'pub-c-ceff350b-b55f-4747-abdf-6cf0867a8620'
 
-pn.subscribe
+pubnub.subscribe
   channel: 'test'
   callback: (message) ->
     message = JSON.parse message
@@ -69,7 +69,7 @@ createNode = (coords, name, radius) ->
 #   coords: { lat: 123, long: 456 }
 #   name: 'ABC'
 # }
-pn.subscribe
+pubnub.subscribe
   channel: 'createNode'
   callback: (message) ->
     message = JSON.parse message
@@ -79,46 +79,50 @@ pn.subscribe
       if node.name is message.name
         exists = true
 
-    unless exists
+    unless exists is true
       createNode message.coords, message.name, message.radius
       message.uuid = null
-      pn.publish
+      pubnub.publish
         channel: 'createNode'
         message: JSON.stringify message
     else
-      pn.publish
+      pubnub.publish
         channel: message.uuid
-        message: "Name #{message.name} is already taken."
+        message: JSON.stringify
+          error: "Name #{message.name} is already taken."
 
-# Use rest service for reporting position
+pubnub.subscribe
+  channel: 'getNodes'
+  callback: (message) ->
+    data = JSON.parse message
+    console.log 'getNodes', data
+
+    nearNodes = []
+    insideNodes = []
+    for node in nodes
+      if node.isNear data.location.latitude, data.location.longitude
+        nearNodes.push
+          name: node.name
+          lat: node.lat
+          long: node.long
+          radius: node.radius
+      if node.isInside data.location.latitude, data.location.longitude
+        insideNodes.push
+          name: node.name
+          lat: node.lat
+          long: node.long
+          radius: node.radius
+
+    console.log 'Publishing to', data.uuid
+    pubnub.publish
+      channel: data.uuid
+      message: JSON.stringify
+        type: 'getNodes'
+        near: nearNodes
+        inside: insideNodes
+
+# Use rest service for serving the client
 app = connect()
 app.use(connect.logger('dev'))
-
 app.use connect.static('../client')
-
-app.use '/nodes', connect.json()
-app.use '/nodes', (req, res) ->
-  data = req.body
-  console.log data
-
-  nearNodes = []
-  insideNodes = []
-  for node in nodes
-    if node.isNear data.location.latitude, data.location.longitude
-      nearNodes.push
-        name: node.name
-        lat: node.lat
-        long: node.long
-        radius: node.radius
-    if node.isInside data.location.latitude, data.location.longitude
-      insideNodes.push
-        name: node.name
-        lat: node.lat
-        long: node.long
-        radius: node.radius
-
-  res.end JSON.stringify
-    near: nearNodes
-    inside: insideNodes
-
 app.listen(3001)

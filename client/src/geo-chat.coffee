@@ -62,6 +62,7 @@ pubnub = PUBNUB.init
   publish_key: 'pub-c-ceff350b-b55f-4747-abdf-6cf0867a8620'
   uuid: uuid
 
+console.log 'Listening to', uuid
 pubnub.subscribe
   channel: uuid
   callback: (message) ->
@@ -144,32 +145,37 @@ class Node
 
 # Get the nodes from the server and bind them to node objects
 updateNodes = () ->
-  $.ajax
-      type: 'POST'
-      url: 'http://localhost:3001/nodes'
-      headers:
-        'Content-Type': 'application/json'
-      data: JSON.stringify
-        name: 'Testing'
-        location:
-          latitude: currentPos.coords.latitude
-          longitude: currentPos.coords.longitude
-      success: (data) ->
-        data = JSON.parse data
-        console.log data
+  pubnub.publish
+    channel: 'getNodes'
+    message: JSON.stringify
+      name: 'AUser'
+      uuid: uuid
+      location:
+        latitude: currentPos.coords.latitude
+        longitude: currentPos.coords.longitude
 
-        $('#nodes a').off('click')
-        $('#nodes').html("Nodes located in: ")
+pubnub.subscribe
+  channel: uuid
+  connect: () ->
+    updateNodes()
+  callback: (data) ->
+    data = JSON.parse data
+    console.log 'getNodes', data
+    
+    if data.type is 'getNodes'
+      $('#nodes a').off('click')
+      $('#nodes').html("Nodes located in: ")
 
-        for node in nodes
-          node.destroy()
+      for node in nodes
+        node.destroy()
+      nodes = []
 
-        for node in data.near
-          nodes.push new Node node.name, node.radius, node.lat, node.long
+      for node in data.near
+        nodes.push new Node node.name, node.radius, node.lat, node.long
 
-        for node in data.inside
-          nodes.push new Node node.name, node.radius, node.lat, node.long
-          $('#nodes').append(nodes[nodes.length - 1].el)
+      for node in data.inside
+        nodes.push new Node node.name, node.radius, node.lat, node.long
+        $('#nodes').append(nodes[nodes.length - 1].el)
 
 $(document).ready () ->
   # Get the current position and initialize the map
@@ -227,6 +233,8 @@ $(document).ready () ->
         coords:
           lat: currentPos.coords.latitude
           long: currentPos.coords.longitude
+      callback: () ->
+        updateNodes()
 
   # Bindings for sending chat messages
   $('#send-message').on 'click', (event) ->

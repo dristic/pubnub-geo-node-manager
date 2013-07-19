@@ -95,6 +95,8 @@
     uuid: uuid
   });
 
+  console.log('Listening to', uuid);
+
   pubnub.subscribe({
     channel: uuid,
     callback: function(message) {
@@ -200,29 +202,36 @@
   })();
 
   updateNodes = function() {
-    return $.ajax({
-      type: 'POST',
-      url: 'http://localhost:3001/nodes',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      data: JSON.stringify({
-        name: 'Testing',
+    return pubnub.publish({
+      channel: 'getNodes',
+      message: JSON.stringify({
+        name: 'AUser',
+        uuid: uuid,
         location: {
           latitude: currentPos.coords.latitude,
           longitude: currentPos.coords.longitude
         }
-      }),
-      success: function(data) {
-        var node, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _results;
-        data = JSON.parse(data);
-        console.log(data);
+      })
+    });
+  };
+
+  pubnub.subscribe({
+    channel: uuid,
+    connect: function() {
+      return updateNodes();
+    },
+    callback: function(data) {
+      var node, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _results;
+      data = JSON.parse(data);
+      console.log('getNodes', data);
+      if (data.type === 'getNodes') {
         $('#nodes a').off('click');
         $('#nodes').html("Nodes located in: ");
         for (_i = 0, _len = nodes.length; _i < _len; _i++) {
           node = nodes[_i];
           node.destroy();
         }
+        nodes = [];
         _ref = data.near;
         for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
           node = _ref[_j];
@@ -237,8 +246,8 @@
         }
         return _results;
       }
-    });
-  };
+    }
+  });
 
   $(document).ready(function() {
     navigator.geolocation.getCurrentPosition((function(position) {
@@ -293,7 +302,10 @@
             lat: currentPos.coords.latitude,
             long: currentPos.coords.longitude
           }
-        })
+        }),
+        callback: function() {
+          return updateNodes();
+        }
       });
     };
     return $('#send-message').on('click', function(event) {
