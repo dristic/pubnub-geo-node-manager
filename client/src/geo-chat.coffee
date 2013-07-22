@@ -147,14 +147,15 @@ class Node
 
 # Get the nodes from the server and bind them to node objects
 updateNodes = () ->
-  pubnub.publish
-    channel: 'getNodes'
-    message: JSON.stringify
-      name: 'AUser'
-      uuid: uuid
-      location:
-        latitude: currentPos.coords.latitude
-        longitude: currentPos.coords.longitude
+  if currentPos.coords?
+    pubnub.publish
+      channel: 'getNodes'
+      message: JSON.stringify
+        name: 'AUser'
+        uuid: uuid
+        location:
+          latitude: currentPos.coords.latitude
+          longitude: currentPos.coords.longitude
 
 pubnub.subscribe
   channel: uuid
@@ -222,7 +223,7 @@ $(document).ready () ->
       lastTimeout = Date.now()
       updateNodes()
 
-    map.setCenter new google.maps.LatLng(currentPos.coords.latitude, currentPos.coords.longitude)
+    #map.setCenter new google.maps.LatLng(currentPos.coords.latitude, currentPos.coords.longitude)
 
   # Sends a create node command to the server
   document.querySelector('#create-node').onclick = (event) ->

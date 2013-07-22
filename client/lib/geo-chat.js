@@ -206,17 +206,19 @@
   })();
 
   updateNodes = function() {
-    return pubnub.publish({
-      channel: 'getNodes',
-      message: JSON.stringify({
-        name: 'AUser',
-        uuid: uuid,
-        location: {
-          latitude: currentPos.coords.latitude,
-          longitude: currentPos.coords.longitude
-        }
-      })
-    });
+    if (currentPos.coords != null) {
+      return pubnub.publish({
+        channel: 'getNodes',
+        message: JSON.stringify({
+          name: 'AUser',
+          uuid: uuid,
+          location: {
+            latitude: currentPos.coords.latitude,
+            longitude: currentPos.coords.longitude
+          }
+        })
+      });
+    }
   };
 
   pubnub.subscribe({
@@ -294,9 +296,8 @@
       }
       if (Date.now() - lastTimeout > updateTimeout) {
         lastTimeout = Date.now();
-        updateNodes();
+        return updateNodes();
       }
-      return map.setCenter(new google.maps.LatLng(currentPos.coords.latitude, currentPos.coords.longitude));
     });
     document.querySelector('#create-node').onclick = function(event) {
       var nodeMessage, nodeName, radius;
