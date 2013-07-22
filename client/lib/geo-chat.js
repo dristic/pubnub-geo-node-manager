@@ -283,7 +283,10 @@
         title: "Hello World!",
         map: map
       });
-    }), onError);
+    }), onError, {
+      timeout: 30000,
+      enableHighAccuracy: true
+    });
     navigator.geolocation.watchPosition(function(position) {
       currentPos = position;
       if (localStorage['location']) {

@@ -209,7 +209,7 @@ $(document).ready () ->
       position: mapOptions.center
       title: "Hello World!"
       map: map
-  ), onError
+  ), onError, { timeout: 30000, enableHighAccuracy: true }
 
   # Watch the geolocation over time
   navigator.geolocation.watchPosition (position) ->
