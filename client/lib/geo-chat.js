@@ -126,7 +126,7 @@
 
   nodes = [];
 
-  updateTimeout = 50000;
+  updateTimeout = 60000;
 
   lastTimeout = Date.now();
 

@@ -83,7 +83,7 @@ startPos = {}
 currentPos = {}
 currentNode = ''
 nodes = []
-updateTimeout = 50000
+updateTimeout = 60000
 lastTimeout = Date.now()
 
 # Node class that holds view information and updates presence
