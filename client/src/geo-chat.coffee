@@ -83,6 +83,8 @@ startPos = {}
 currentPos = {}
 currentNode = ''
 nodes = []
+updateTimeout = 50000
+lastTimeout = Date.now()
 
 # Node class that holds view information and updates presence
 class Node
@@ -216,19 +218,24 @@ $(document).ready () ->
     if localStorage['location']
       currentPos = JSON.parse localStorage['location']
 
-    updateNodes()
+    if Date.now() - lastTimeout > updateTimeout
+      lastTimeout = Date.now()
+      updateNodes()
 
     map.setCenter new google.maps.LatLng(currentPos.coords.latitude, currentPos.coords.longitude)
 
   # Sends a create node command to the server
   document.querySelector('#create-node').onclick = (event) ->
     nodeName = $('#node-name').val()
+    nodeMessage = $('#node-message').val()
     radius = parseInt($('#radius').val())
+
     pubnub.publish
       channel: 'createNode'
       message: JSON.stringify
         uuid: uuid
         name: nodeName
+        message: nodeMessage
         radius: radius
         coords:
           lat: currentPos.coords.latitude

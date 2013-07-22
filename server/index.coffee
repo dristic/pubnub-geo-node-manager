@@ -32,8 +32,17 @@ nodes = []
 
 # Node class
 class Node
-  constructor: (@name, @lat, @long, @radius) ->
-    @name = @name
+  constructor: (@name, @lat, @long, @radius, @message) ->
+    # Add join message
+    pubnub.subscribe
+      channel: @name
+      callback: (message) ->
+        # Do nothing
+      presence: (message) =>
+        if message.action is 'join'
+          pubnub.publish
+            channel: @name
+            message: @message
 
   isNear: (lat, long) ->
     distance = calculateDistance @lat, @long, lat, long
@@ -60,8 +69,8 @@ class Node
       false
 
 # create node internal function
-createNode = (coords, name, radius) ->
-  nodes.push new Node(name, coords.lat, coords.long, radius)
+createNode = (coords, name, radius, message) ->
+  nodes.push new Node(name, coords.lat, coords.long, radius, message)
   console.log "Created node: #{name}"
 
 # createNode
@@ -80,7 +89,7 @@ pubnub.subscribe
         exists = true
 
     unless exists is true
-      createNode message.coords, message.name, message.radius
+      createNode message.coords, message.name, message.radius, message.message
       message.uuid = null
       pubnub.publish
         channel: 'createNode'

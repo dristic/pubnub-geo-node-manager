@@ -1,5 +1,5 @@
 (function() {
-  var Node, calculateDistance, chilled, currentNode, currentPos, map, nodes, onError, pubnub, startPos, updateNodes, uuid;
+  var Node, calculateDistance, chilled, currentNode, currentPos, lastTimeout, map, nodes, onError, pubnub, startPos, updateNodes, updateTimeout, uuid;
 
   calculateDistance = function(lat1, lon1, lat2, lon2) {
     var R, a, c, d, dLat, dLon;
@@ -125,6 +125,10 @@
   currentNode = '';
 
   nodes = [];
+
+  updateTimeout = 50000;
+
+  lastTimeout = Date.now();
 
   Node = (function() {
     function Node(name, radius, lat, long) {
@@ -285,18 +289,23 @@
       if (localStorage['location']) {
         currentPos = JSON.parse(localStorage['location']);
       }
-      updateNodes();
+      if (Date.now() - lastTimeout > updateTimeout) {
+        lastTimeout = Date.now();
+        updateNodes();
+      }
       return map.setCenter(new google.maps.LatLng(currentPos.coords.latitude, currentPos.coords.longitude));
     });
     document.querySelector('#create-node').onclick = function(event) {
-      var nodeName, radius;
+      var nodeMessage, nodeName, radius;
       nodeName = $('#node-name').val();
+      nodeMessage = $('#node-message').val();
       radius = parseInt($('#radius').val());
       return pubnub.publish({
         channel: 'createNode',
         message: JSON.stringify({
           uuid: uuid,
           name: nodeName,
+          message: nodeMessage,
           radius: radius,
           coords: {
             lat: currentPos.coords.latitude,
