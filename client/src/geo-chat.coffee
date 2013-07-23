@@ -62,7 +62,6 @@ pubnub = PUBNUB.init
   publish_key: 'pub-c-ceff350b-b55f-4747-abdf-6cf0867a8620'
   uuid: uuid
 
-console.log 'Listening to', uuid
 pubnub.subscribe
   channel: uuid
   callback: (message) ->
@@ -74,7 +73,7 @@ else
   console.log "Geolocation is not supported for this"
 
 onError = (error) ->
-  alert 'Error has occurred: ' + error.code
+  alert 'Error has occurred, please check your location and connection settings: ' + error.message
 
 # Globals
 map = {}
@@ -167,7 +166,7 @@ pubnub.subscribe
     
     if data.type is 'getNodes'
       $('#nodes a').off('click')
-      $('#nodes').html("Nodes located in: ")
+      $('#nodes').html("")
 
       for node in nodes
         node.destroy()
@@ -198,6 +197,8 @@ $(document).ready () ->
       zoom: 15
       mapTypeId: google.maps.MapTypeId.ROADMAP
       disableDefaultUI: true
+      draggable: false
+      disableDoubleClickZoom: true
       mapTypeId: 'Chilled'
       mapTypeControlOptions:
         mapTypeIds: [google.maps.MapTypeId.ROADMAP, 'map_style']
@@ -252,3 +253,7 @@ $(document).ready () ->
       pubnub.publish
         channel: currentNode
         message: message
+
+  # Binding for opening and closing the create node panel
+  $('#open-create-node').on 'click', (event) ->
+    $('#create-node-panel').toggleClass 'hidden'

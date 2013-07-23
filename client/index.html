@@ -11,23 +11,28 @@
 <body>
   <div id="map-canvas"></div>
 
-  <h1 class="logo">Geo Chatr</h1>
+  <h1 class="logo">Geo Chatr <button id="open-create-node">New Node</button></h1>
 
   <div class="overlay">
-    <div class="panel">
+    <div class="panel hidden" id="create-node-panel">
       <input type="text" name="name" id="node-name" placeholder="Node Name" />
       <input type="text" name="message" id="node-message" placeholder="Node Message" />
       <input type="number" min="100" max="500" step="1" value="100" name="radius" id="radius" />
       <button id="create-node">Create Node</button>
     </div>
 
-    <div class="panel">
-      <div id="nodes"></div>
+    <div class="panel" id="join-node-panel">
+      <div class="span3">
+        <h3>Join a Node</h3>
+        <div id="nodes"></div>
+      </div>
 
-      <input type="text" name="message" id="message" placeholder="Type message here" />
-      <button id="send-message">Send Message</button>
+      <div class="span9">
+        <input type="text" name="message" id="message" placeholder="Type message here" />
+        <button id="send-message">Send Message</button>
 
-      <div id="messages"></div>
+        <div id="messages"></div>
+      </div>
     </div>
   </div>
 

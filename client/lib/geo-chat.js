@@ -95,8 +95,6 @@
     uuid: uuid
   });
 
-  console.log('Listening to', uuid);
-
   pubnub.subscribe({
     channel: uuid,
     callback: function(message) {
@@ -111,7 +109,7 @@
   }
 
   onError = function(error) {
-    return alert('Error has occurred: ' + error.code);
+    return alert('Error has occurred, please check your location and connection settings: ' + error.message);
   };
 
   map = {};
@@ -232,7 +230,7 @@
       console.log('getNodes', data);
       if (data.type === 'getNodes') {
         $('#nodes a').off('click');
-        $('#nodes').html("Nodes located in: ");
+        $('#nodes').html("");
         for (_i = 0, _len = nodes.length; _i < _len; _i++) {
           node = nodes[_i];
           node.destroy();
@@ -272,6 +270,8 @@
         zoom: 15,
         mapTypeId: google.maps.MapTypeId.ROADMAP,
         disableDefaultUI: true,
+        draggable: false,
+        disableDoubleClickZoom: true,
         mapTypeId: 'Chilled',
         mapTypeControlOptions: {
           mapTypeIds: [google.maps.MapTypeId.ROADMAP, 'map_style']
@@ -321,7 +321,7 @@
         }
       });
     };
-    return $('#send-message').on('click', function(event) {
+    $('#send-message').on('click', function(event) {
       var message;
       message = $('#message').val();
       if (message !== '') {
@@ -330,6 +330,9 @@
           message: message
         });
       }
+    });
+    return $('#open-create-node').on('click', function(event) {
+      return $('#create-node-panel').toggleClass('hidden');
     });
   });
 
