@@ -19,14 +19,6 @@ pubnub = PUBNUB.init
   subscribe_key: 'sub-c-4a330ce2-ced1-11e2-9fea-02ee2ddab7fe'
   publish_key: 'pub-c-ceff350b-b55f-4747-abdf-6cf0867a8620'
 
-pubnub.subscribe
-  channel: 'test'
-  callback: (message) ->
-    message = JSON.parse message
-    console.log message
-
-# Hold all users and location
-
 # Hold all nodes created
 nodes = []
 
@@ -42,7 +34,7 @@ class Node
         if message.action is 'join'
           pubnub.publish
             channel: @name
-            message: @message
+            message: "Node Message: #{@message}"
 
   isNear: (lat, long) ->
     distance = calculateDistance @lat, @long, lat, long

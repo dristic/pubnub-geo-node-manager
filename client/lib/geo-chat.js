@@ -95,13 +95,6 @@
     uuid: uuid
   });
 
-  pubnub.subscribe({
-    channel: uuid,
-    callback: function(message) {
-      return console.log(message);
-    }
-  });
-
   if (navigator.geolocation) {
     console.log("Geolocation is supported!");
   } else {
@@ -220,36 +213,42 @@
   };
 
   pubnub.subscribe({
-    channel: uuid,
-    connect: function() {
-      return updateNodes();
-    },
-    callback: function(data) {
-      var node, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _results;
-      data = JSON.parse(data);
-      console.log('getNodes', data);
-      if (data.type === 'getNodes') {
-        $('#nodes a').off('click');
-        $('#nodes').html("");
-        for (_i = 0, _len = nodes.length; _i < _len; _i++) {
-          node = nodes[_i];
-          node.destroy();
+    channel: 'test',
+    callback: function(message) {},
+    connect: function(response) {
+      return pubnub.subscribe({
+        channel: uuid,
+        connect: function() {
+          return updateNodes();
+        },
+        callback: function(data) {
+          var node, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _results;
+          data = JSON.parse(data);
+          console.log('getNodes', data);
+          if (data.type === 'getNodes') {
+            $('#nodes a').off('click');
+            $('#nodes').html("");
+            for (_i = 0, _len = nodes.length; _i < _len; _i++) {
+              node = nodes[_i];
+              node.destroy();
+            }
+            nodes = [];
+            _ref = data.near;
+            for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+              node = _ref[_j];
+              nodes.push(new Node(node.name, node.radius, node.lat, node.long));
+            }
+            _ref1 = data.inside;
+            _results = [];
+            for (_k = 0, _len2 = _ref1.length; _k < _len2; _k++) {
+              node = _ref1[_k];
+              nodes.push(new Node(node.name, node.radius, node.lat, node.long));
+              _results.push($('#nodes').append(nodes[nodes.length - 1].el));
+            }
+            return _results;
+          }
         }
-        nodes = [];
-        _ref = data.near;
-        for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
-          node = _ref[_j];
-          nodes.push(new Node(node.name, node.radius, node.lat, node.long));
-        }
-        _ref1 = data.inside;
-        _results = [];
-        for (_k = 0, _len2 = _ref1.length; _k < _len2; _k++) {
-          node = _ref1[_k];
-          nodes.push(new Node(node.name, node.radius, node.lat, node.long));
-          _results.push($('#nodes').append(nodes[nodes.length - 1].el));
-        }
-        return _results;
-      }
+      });
     }
   });
 

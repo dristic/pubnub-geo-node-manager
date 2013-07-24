@@ -88,12 +88,37 @@ button:active {
   border-radius: 5px;
   color: white;
   text-decoration: none;
+  margin: 2px;
 }
 
 #join-node-panel {
-  background: #CCC;
   padding: 10px;
   margin: 0;
+  height: 300px;
+  max-width: 960px;
+  min-width: 500px;
+  width: 100%;
+}
+
+#join-node-panel #nodes {
+  display: block;
+  width: 100%;
+  max-width: 150px;
+  height: 250px;
+  overflow: scroll;
+}
+
+#join-node-panel .span3 {
+  vertical-align: top;
+  box-sizing: border-box;
+  /*border-right: 1px solid black;*/
+  height: 100%;
+}
+
+#join-node-panel .span9 {
+  vertical-align: top;
+  box-sizing: border-box;
+  height: 100%;
 }
 
 .span3 {
@@ -107,7 +132,11 @@ button:active {
 }
 
 #messages {
+  background: #CCC;
   display: block;
-  max-height: 300px;
+  height: 240px;
+  margin-bottom: 10px;
   overflow: scroll;
+  box-sizing: border-box;
+  padding: 5px;
 }

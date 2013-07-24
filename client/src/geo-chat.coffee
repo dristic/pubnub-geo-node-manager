@@ -62,11 +62,6 @@ pubnub = PUBNUB.init
   publish_key: 'pub-c-ceff350b-b55f-4747-abdf-6cf0867a8620'
   uuid: uuid
 
-pubnub.subscribe
-  channel: uuid
-  callback: (message) ->
-    console.log message
-
 if navigator.geolocation
   console.log "Geolocation is supported!"
 else
@@ -157,27 +152,32 @@ updateNodes = () ->
           longitude: currentPos.coords.longitude
 
 pubnub.subscribe
-  channel: uuid
-  connect: () ->
-    updateNodes()
-  callback: (data) ->
-    data = JSON.parse data
-    console.log 'getNodes', data
-    
-    if data.type is 'getNodes'
-      $('#nodes a').off('click')
-      $('#nodes').html("")
+  channel: 'test'
+  callback: (message) ->
+    # Do nothing
+  connect: (response) ->
+    pubnub.subscribe
+      channel: uuid
+      connect: () ->
+        updateNodes()
+      callback: (data) ->
+        data = JSON.parse data
+        console.log 'getNodes', data
+        
+        if data.type is 'getNodes'
+          $('#nodes a').off('click')
+          $('#nodes').html("")
 
-      for node in nodes
-        node.destroy()
-      nodes = []
+          for node in nodes
+            node.destroy()
+          nodes = []
 
-      for node in data.near
-        nodes.push new Node node.name, node.radius, node.lat, node.long
+          for node in data.near
+            nodes.push new Node node.name, node.radius, node.lat, node.long
 
-      for node in data.inside
-        nodes.push new Node node.name, node.radius, node.lat, node.long
-        $('#nodes').append(nodes[nodes.length - 1].el)
+          for node in data.inside
+            nodes.push new Node node.name, node.radius, node.lat, node.long
+            $('#nodes').append(nodes[nodes.length - 1].el)
 
 $(document).ready () ->
   # Get the current position and initialize the map
