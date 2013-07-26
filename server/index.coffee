@@ -126,4 +126,4 @@ pubnub.subscribe
 app = connect()
 app.use(connect.logger('dev'))
 app.use connect.static('client')
-app.listen(3001)
+app.listen(80)

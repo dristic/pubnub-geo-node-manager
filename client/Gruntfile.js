@@ -85,6 +85,6 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-connect');
 
   // Default task.
-  grunt.registerTask('default', ['coffee', 'watch']);
+  grunt.registerTask('default', ['connect', 'coffee', 'watch']);
 
 };
