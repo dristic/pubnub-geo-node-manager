@@ -157,7 +157,7 @@
 
   app.use(connect.logger('dev'));
 
-  app.use(connect["static"]('../client'));
+  app.use(connect["static"]('client'));
 
   app.listen(3001);
 

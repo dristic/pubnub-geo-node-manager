@@ -125,5 +125,5 @@ pubnub.subscribe
 # Use rest service for serving the client
 app = connect()
 app.use(connect.logger('dev'))
-app.use connect.static('../client')
+app.use connect.static('client')
 app.listen(3001)
