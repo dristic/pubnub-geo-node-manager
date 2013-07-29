@@ -136,11 +136,10 @@
         callback: function(message) {},
         presence: function(message) {
           if (message.action === 'join') {
-            _this.users++;
+            return _this.users++;
           } else if (message.action === 'leave') {
-            _this.users--;
+            return _this.users--;
           }
-          return _this.el.text("" + _this.name + " (" + _this.users + ")");
         }
       });
       opts = {

@@ -95,7 +95,6 @@ class Node
           @users++
         else if message.action is 'leave'
           @users--
-        @el.text("#{@name} (#{@users})")
 
     opts =
       fillColor: 'blue'
