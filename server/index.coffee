@@ -126,4 +126,4 @@ pubnub.subscribe
 app = connect()
 app.use(connect.logger('dev'))
 app.use connect.static('client')
-app.listen(80)
+app.listen(process.env.PORT || 5000)
