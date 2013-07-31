@@ -109,6 +109,7 @@ button:active {
   overflow: scroll;
   padding: 10px;
   padding-bottom: 0;
+  box-sizing: border-box;
 }
 
 #join-node-panel .span3 {
