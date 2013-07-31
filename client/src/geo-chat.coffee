@@ -72,13 +72,13 @@ onError = (error) ->
 
 # Globals
 map = {}
+marker = {}
 nodes = []
 startPos = {}
+lastPos = {}
 currentPos = {}
 currentNode = ''
 nodes = []
-updateTimeout = 60000
-lastTimeout = Date.now()
 
 # Node class that holds view information and updates presence
 class Node
@@ -183,6 +183,7 @@ $(document).ready () ->
   navigator.geolocation.getCurrentPosition ((position) ->
     startPos = position
     currentPos = position
+    lastPos = position
 
     if localStorage['location']
       startPos = JSON.parse localStorage['location']
@@ -192,7 +193,7 @@ $(document).ready () ->
     styledMapType = new google.maps.StyledMapType chilled, { name: 'Chilled' }
 
     mapOptions =
-      center: new google.maps.LatLng(startPos.coords.latitude, startPos.coords.longitude)
+      center: new google.maps.LatLng(startPos.coords.latitude - 0.004, startPos.coords.longitude)
       zoom: 15
       mapTypeId: google.maps.MapTypeId.ROADMAP
       disableDefaultUI: true
@@ -207,7 +208,7 @@ $(document).ready () ->
     map.setMapTypeId 'map_style'
 
     marker = new google.maps.Marker
-      position: mapOptions.center
+      position: new google.maps.LatLng(startPos.coords.latitude, startPos.coords.longitude)
       title: "Hello World!"
       map: map
   ), onError, { timeout: 30000, enableHighAccuracy: true }
@@ -219,11 +220,14 @@ $(document).ready () ->
     if localStorage['location']
       currentPos = JSON.parse localStorage['location']
 
-    if Date.now() - lastTimeout > updateTimeout
-      lastTimeout = Date.now()
+    dist = calculateDistance(lastPos.coords.latitude, lastPos.coords.longitude, currentPos.coords.latitude, currentPos.coords.longitude)
+    # Convert from meters to km
+    if dist > (100 / 1000)
+      lastPos = currentPos
       updateNodes()
 
-    #map.setCenter new google.maps.LatLng(currentPos.coords.latitude, currentPos.coords.longitude)
+    map.setCenter new google.maps.LatLng(currentPos.coords.latitude - 0.004, currentPos.coords.longitude)
+    marker.setPosition new google.maps.LatLng(currentPos.coords.latitude, currentPos.coords.longitude)
 
   # Sends a create node command to the server
   document.querySelector('#create-node').onclick = (event) ->
@@ -256,3 +260,7 @@ $(document).ready () ->
   # Binding for opening and closing the create node panel
   $('#open-create-node').on 'click', (event) ->
     $('#create-node-panel').toggleClass 'hidden'
+
+  # Refreshing the location data
+  $('#refresh').on 'click', (event) ->
+    updateNodes()

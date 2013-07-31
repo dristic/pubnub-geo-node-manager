@@ -1,5 +1,5 @@
 (function() {
-  var Node, calculateDistance, chilled, currentNode, currentPos, lastTimeout, map, nodes, onError, pubnub, startPos, updateNodes, updateTimeout, uuid;
+  var Node, calculateDistance, chilled, currentNode, currentPos, lastPos, map, marker, nodes, onError, pubnub, startPos, updateNodes, uuid;
 
   calculateDistance = function(lat1, lon1, lat2, lon2) {
     var R, a, c, d, dLat, dLon;
@@ -107,19 +107,19 @@
 
   map = {};
 
+  marker = {};
+
   nodes = [];
 
   startPos = {};
+
+  lastPos = {};
 
   currentPos = {};
 
   currentNode = '';
 
   nodes = [];
-
-  updateTimeout = 60000;
-
-  lastTimeout = Date.now();
 
   Node = (function() {
     function Node(name, radius, lat, long) {
@@ -253,9 +253,10 @@
 
   $(document).ready(function() {
     navigator.geolocation.getCurrentPosition((function(position) {
-      var mapOptions, marker, styledMapType;
+      var mapOptions, styledMapType;
       startPos = position;
       currentPos = position;
+      lastPos = position;
       if (localStorage['location']) {
         startPos = JSON.parse(localStorage['location']);
       }
@@ -264,7 +265,7 @@
         name: 'Chilled'
       });
       mapOptions = {
-        center: new google.maps.LatLng(startPos.coords.latitude, startPos.coords.longitude),
+        center: new google.maps.LatLng(startPos.coords.latitude - 0.004, startPos.coords.longitude),
         zoom: 15,
         mapTypeId: google.maps.MapTypeId.ROADMAP,
         disableDefaultUI: true,
@@ -279,7 +280,7 @@
       map.mapTypes.set('map_style', styledMapType);
       map.setMapTypeId('map_style');
       return marker = new google.maps.Marker({
-        position: mapOptions.center,
+        position: new google.maps.LatLng(startPos.coords.latitude, startPos.coords.longitude),
         title: "Hello World!",
         map: map
       });
@@ -288,14 +289,18 @@
       enableHighAccuracy: true
     });
     navigator.geolocation.watchPosition(function(position) {
+      var dist;
       currentPos = position;
       if (localStorage['location']) {
         currentPos = JSON.parse(localStorage['location']);
       }
-      if (Date.now() - lastTimeout > updateTimeout) {
-        lastTimeout = Date.now();
-        return updateNodes();
+      dist = calculateDistance(lastPos.coords.latitude, lastPos.coords.longitude, currentPos.coords.latitude, currentPos.coords.longitude);
+      if (dist > (100 / 1000)) {
+        lastPos = currentPos;
+        updateNodes();
       }
+      map.setCenter(new google.maps.LatLng(currentPos.coords.latitude - 0.004, currentPos.coords.longitude));
+      return marker.setPosition(new google.maps.LatLng(currentPos.coords.latitude, currentPos.coords.longitude));
     });
     document.querySelector('#create-node').onclick = function(event) {
       var nodeMessage, nodeName, radius;
@@ -329,8 +334,11 @@
         });
       }
     });
-    return $('#open-create-node').on('click', function(event) {
+    $('#open-create-node').on('click', function(event) {
       return $('#create-node-panel').toggleClass('hidden');
+    });
+    return $('#refresh').on('click', function(event) {
+      return updateNodes();
     });
   });
 

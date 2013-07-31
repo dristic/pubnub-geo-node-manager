@@ -18,6 +18,7 @@ body, html {
   bottom: 0;
   left: 0;
   display: block;
+  width: 100%;
 }
 
 .logo {
@@ -92,7 +93,7 @@ button:active {
 }
 
 #join-node-panel {
-  padding: 10px;
+  padding: 0;
   margin: 0;
   height: 300px;
   max-width: 960px;
@@ -106,6 +107,8 @@ button:active {
   max-width: 150px;
   height: 250px;
   overflow: scroll;
+  padding: 10px;
+  padding-bottom: 0;
 }
 
 #join-node-panel .span3 {
@@ -113,22 +116,39 @@ button:active {
   box-sizing: border-box;
   /*border-right: 1px solid black;*/
   height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#join-node-panel .span3 h3 {
+  width: 100%;
+  display: block;
+  margin: 0;
+  padding-top: 10px;
+  background: #3498DB;
+  color: white;
+  padding-bottom: 10px;
+  padding-left: 10px;
 }
 
 #join-node-panel .span9 {
   vertical-align: top;
   box-sizing: border-box;
   height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 .span3 {
-  display: inline-block;
-  width: 33%;
+  float: left;
+  display: block;
+  width: 33.33333333333%;
 }
 
 .span9 {
-  display: inline-block;
-  width: 66%;
+  float: left;
+  display: block;
+  width: 66.66666666666%;
 }
 
 #messages {
@@ -139,4 +159,10 @@ button:active {
   overflow: scroll;
   box-sizing: border-box;
   padding: 5px;
+}
+
+@media(max-width:485px) {
+  #messages {
+    height: 200px;
+  }
 }
