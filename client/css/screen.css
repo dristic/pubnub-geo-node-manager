@@ -43,7 +43,7 @@ body, html {
 }
 
 .panel {
-  background: rgba(236, 240, 241, 0.9);
+  background: rgba(236, 240, 241, 1);
   padding: 5px;
   margin: 5px;
 }
