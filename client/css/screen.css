@@ -167,3 +167,17 @@ button:active {
     height: 200px;
   }
 }
+
+@media(max-height:380px) {
+  #join-node-panel {
+    height: 200px;
+  }
+
+  #join-node-panel #nodes {
+    height: 150px;
+  }
+
+  #messages {
+    height: 140px;
+  }
+}
