@@ -21,6 +21,7 @@ pubnub = PUBNUB.init
 
 # Hold all nodes created
 nodes = []
+NEAR_DISTANCE = 5000
 
 # Node class
 class Node
@@ -40,10 +41,8 @@ class Node
     distance = calculateDistance @lat, @long, lat, long
     distance = Math.abs distance
 
-    console.log distance
-
     # Radius is in meters, distance is in km
-    if distance > (@radius / 1000) and distance < (@radius / 1000) + (500 / 1000)
+    if distance > (@radius / 1000) and distance < (@radius / 1000) + (NEAR_DISTANCE / 1000)
       true
     else
       false
@@ -51,8 +50,6 @@ class Node
   isInside: (lat, long) ->
     distance = calculateDistance @lat, @long, lat, long
     distance = Math.abs distance
-
-    console.log distance
 
     # Radius is in meters, distance is in km
     if distance < (@radius / 1000)
@@ -69,6 +66,8 @@ createNode = (coords, name, radius, message) ->
 # {
 #   coords: { lat: 123, long: 456 }
 #   name: 'ABC'
+#   radius: 100
+#   message: 'Hello World'
 # }
 pubnub.subscribe
   channel: 'createNode'
@@ -127,3 +126,66 @@ app = connect()
 app.use(connect.logger('dev'))
 app.use connect.static('client')
 app.listen(process.env.PORT ? 5000)
+
+# Backfill node list
+# createNode = (coords, name, radius, message) ->
+initialNodes = [
+  {
+    name: 'Point1'
+    radius: 150
+    message: 'Welcome to the PubNub scavenger hunt!'
+    coords: {
+      lat: 37.765155
+      long: -122.394707
+    }
+  },
+  {
+    name: 'Point2'
+    radius: 150
+    message: 'Best photo interpretation of H2O. Now take your H2O bottle, grab some peanuts and cracker jacks and take a 7th inning stretch before hitting the diamond'
+    coords: {
+      lat: 37.767741
+      long: -122.392604
+    }
+  },
+  {
+    name: 'Point3'
+    radius: 100
+    message: 'Film someone running the bases. Now you can blow off some Steam and grab a cold one at this SF icon.'
+    coords: {
+      lat: 37.764468
+      long: -122.399631
+    }
+  },
+  {
+    name: 'Point4'
+    radius: 100
+    message: 'Get a coaster. At this location you can either signup for Greenpeace or buy a $10 container of organic blueberries'
+    coords: {
+      lat: 37.763208
+      long: -122.40108
+    }
+  },
+  {
+    name: 'Point5'
+    radius: 100
+    message: 'Photograph the most expensive item. For all your hard work'
+    coords: {
+      lat: 37.764417
+      long: -122.402764
+    }
+  },
+  {
+    name: 'Point6'
+    radius: 25
+    message: 'Beers for everyone'
+    coords: {
+      lat: 37.765104
+      long: -122.399899
+    }
+  }
+]
+initializeNodes = () ->
+  for initialNode in initialNodes
+    createNode initialNode.coords, initialNode.name, initialNode.radius, initialNode.message
+setTimeout initializeNodes, 5000
