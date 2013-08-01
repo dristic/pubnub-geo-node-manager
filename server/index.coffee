@@ -21,7 +21,7 @@ pubnub = PUBNUB.init
 
 # Hold all nodes created
 nodes = []
-NEAR_DISTANCE = 5000
+NEAR_DISTANCE = 0
 
 # Node class
 class Node
@@ -175,15 +175,15 @@ initialNodes = [
       long: -122.402764
     }
   },
-  {
-    name: 'Point6'
-    radius: 25
-    message: 'Beers for everyone'
-    coords: {
-      lat: 37.765104
-      long: -122.399899
-    }
-  }
+  # {
+  #   name: 'Point6'
+  #   radius: 25
+  #   message: 'Beers for everyone'
+  #   coords: {
+  #     lat: 37.765104
+  #     long: -122.399899
+  #   }
+  # }
 ]
 initializeNodes = () ->
   for initialNode in initialNodes
