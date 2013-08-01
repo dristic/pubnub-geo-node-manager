@@ -35,7 +35,7 @@ class Node
         if message.action is 'join'
           pubnub.publish
             channel: @name
-            message: "Node Message: #{@message}"
+            message: "Clue: #{@message}"
 
   isNear: (lat, long) ->
     distance = calculateDistance @lat, @long, lat, long
@@ -142,7 +142,7 @@ initialNodes = [
   {
     name: 'Point2'
     radius: 150
-    message: 'Best photo interpretation of H2O. Now take your H2O bottle, grab some peanuts and cracker jacks and take a 7th inning stretch before hitting the diamond'
+    message: 'Best photo interpretation of H2O. Once you finish, take your H2O bottle, grab some peanuts and cracker jacks and take a 7th inning stretch before hitting the diamond'
     coords: {
       lat: 37.767741
       long: -122.392604
@@ -151,7 +151,7 @@ initialNodes = [
   {
     name: 'Point3'
     radius: 100
-    message: 'Film someone running the bases. Now you can blow off some Steam and grab a cold one at this SF icon.'
+    message: 'Film someone running the bases. Once you finish, you can blow off some STEAM and grab a cold one at this SF icon.'
     coords: {
       lat: 37.764468
       long: -122.399631
@@ -160,7 +160,7 @@ initialNodes = [
   {
     name: 'Point4'
     radius: 100
-    message: 'Get a coaster. At this location you can either signup for Greenpeace or buy a $10 container of organic blueberries'
+    message: 'Get a coaster. After that, at the next location you can either signup for Greenpeace or buy a $10 container of organic blueberries'
     coords: {
       lat: 37.763208
       long: -122.40108
@@ -169,7 +169,7 @@ initialNodes = [
   {
     name: 'Point5'
     radius: 100
-    message: 'Photograph the most expensive item. For all your hard work'
+    message: 'Photograph the most expensive item. Once you finish, for all your hard work you can PARK yourself inSIDE this fine establishment'
     coords: {
       lat: 37.764417
       long: -122.402764
