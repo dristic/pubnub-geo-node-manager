@@ -169,7 +169,7 @@ initialNodes = [
   {
     name: 'Point5'
     radius: 100
-    message: 'Photograph the most expensive item. Once you finish, for all your hard work you can PARK yourself inSIDE this fine establishment'
+    message: 'Photograph the most expensive item. Once you finish, you deserve a drink. Head back to the ballpark and find the nearest bar.'
     coords: {
       lat: 37.764417
       long: -122.402764
