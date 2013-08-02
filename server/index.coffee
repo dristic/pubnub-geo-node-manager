@@ -160,7 +160,7 @@ initialNodes = [
   {
     name: 'Point4'
     radius: 100
-    message: 'Get a coaster. After that, at the next location you can either signup for Greenpeace or buy a $10 container of organic blueberries'
+    message: 'Get a sticker. After that, at the next location you can either signup for Greenpeace or buy a $10 container of organic blueberries'
     coords: {
       lat: 37.763208
       long: -122.40108
